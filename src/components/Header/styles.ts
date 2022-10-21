@@ -15,7 +15,7 @@ export const Logo = styled.Image`
 `;
 
 export const BackButton = styled(TouchableOpacity).attrs(() => ({
-	activeOpacity: 0.9
+	activeOpacity: 0.7
 }))`
 	flex: 1;
 `;
