@@ -1,5 +1,4 @@
-import { Container, Logo, BackButton } from "./styles";
-import { CaretLeft } from "phosphor-react-native";
+import { Container, Logo, BackButton, BackIcon } from "./styles";
 import logoImg from "@assets/logo.png";
 
 type Props = {
@@ -9,9 +8,9 @@ type Props = {
 export default function Header({ showBackButton = false }: Props) {
 	return (
 		<Container>
-			{showBackButton && (
+			{!showBackButton && (
 				<BackButton>
-					<CaretLeft size={32} color='#fff' />
+					<BackIcon />
 				</BackButton>
 			)}
 
