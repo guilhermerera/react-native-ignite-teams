@@ -11,15 +11,22 @@ import EmptyList from "@components/EmptyList";
 import Button from "@components/Button";
 
 import { Container, Form, HeaderList, PlayerCount } from "./styles";
+import { useRoute } from "@react-navigation/native";
+
+type RouteParams = {
+	group: string;
+};
 
 export default function Players() {
 	const [team, setTeam] = useState("Squad A");
 	const [players, setPlayers] = useState([]);
+	const route = useRoute();
+	const { group } = route.params as RouteParams;
 
 	return (
 		<Container>
 			<Header showBackButton />
-			<Highlight title='Team Name' subtitle='Add your teammates' />
+			<Highlight title={group} subtitle='Add your teammates' />
 			<Form>
 				<InputText placeholder='Player name' autoCorrect={false} />
 				<ButtonIcon icon='add' />
