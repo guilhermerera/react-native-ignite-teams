@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { FlatList } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useState, useCallback } from "react";
+import { FlatList, Alert } from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 import Header from "@components/Header";
 import Highlight from "@components/Highlight";
@@ -9,19 +9,35 @@ import EmptyList from "@components/EmptyList";
 
 import { Container } from "./styles";
 import Button from "@components/Button";
-
-type groupsProps = {
-	id: string;
-	title: string;
-};
+import { getAllGroups } from "@storage/group/getAll";
+import { groupsPropsDTO } from "@storage/group/GroupStorageDTO";
 
 export default function Groups() {
-	const [groups, setGroups] = useState<groupsProps[]>([]);
+	const [groups, setGroups] = useState<groupsPropsDTO[]>([]);
 	const navigation = useNavigation();
 
 	function handleNewGroup() {
 		navigation.navigate("new");
 	}
+
+	function handleOpenGroup(group: string) {
+		navigation.navigate("players", { group });
+	}
+
+	async function fetchGroups() {
+		try {
+			const data: groupsPropsDTO[] = await getAllGroups();
+			setGroups(data);
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	useFocusEffect(
+		useCallback(() => {
+			fetchGroups();
+		}, [])
+	);
 
 	return (
 		<Container>
@@ -31,9 +47,16 @@ export default function Groups() {
 				data={groups}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }) => (
-					<GroupCard title={item.title} activeOpacity={0.7} />
+					<GroupCard
+						title={item.name}
+						activeOpacity={0.7}
+						onPress={() => handleOpenGroup(item.name)}
+					/>
 				)}
-				contentContainerStyle={groups.length === 0 && { flex: 1 }}
+				contentContainerStyle={[
+					{ paddingBottom: 45 },
+					groups.length === 0 && { flex: 1 }
+				]}
 				ListEmptyComponent={
 					<EmptyList message='Register your first team and start playing with your teammates.' />
 				}
