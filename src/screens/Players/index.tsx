@@ -11,11 +11,12 @@ import PlayerCard from "@components/PlayerCard";
 import EmptyList from "@components/EmptyList";
 import Button from "@components/Button";
 
-import { Container, Form, HeaderList, PlayerCount } from "./styles";
+import { Container, Form, HeaderList } from "./styles";
 import { getPlayersByGroup } from "@storage/player/getByGroup";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
 import { addNewPlayerByGroup } from "@storage/player/addNewByGroup";
 import { AppError } from "@utils/AppError";
+import { AddNewSquad } from "@components/AddNewSquad";
 
 type RouteParams = {
 	group: string;
@@ -23,7 +24,10 @@ type RouteParams = {
 
 export default function Players() {
 	const [newPlayerName, setNewPlayerName] = useState("");
-	const [squad, setSquad] = useState("Squad A");
+	const [squadList, setSquadList] = useState<string[]>(["Squad 1"]);
+	const [squadCount, setSquadCount] = useState(squadList.length);
+	const [squad, setSquad] = useState("Squad 1");
+	const [scrollIndex, setScrollIndex] = useState(0);
 	const [players, setPlayers] = useState<PlayerStorageDTO[]>([]);
 	const route = useRoute();
 	const { group } = route.params as RouteParams;
@@ -32,7 +36,7 @@ export default function Players() {
 
 	async function handleAddNewPlayer() {
 		if (trimmedNewPlayerName === "") {
-			return Alert.alert("Add new player", "Please insert player name.");
+			return Alert.alert("Add new player", "Player name is required.");
 		}
 
 		try {
@@ -55,13 +59,36 @@ export default function Players() {
 		}
 	}
 
+	function filterPlayersBySquad(players: PlayerStorageDTO[]) {
+		const filteredPlayers = players.filter((player) => player.squad === squad);
+		return filteredPlayers;
+	}
+
 	async function fetchPlayers() {
 		try {
 			const data: PlayerStorageDTO[] = await getPlayersByGroup(group);
-			setPlayers(data);
+			const filteredPlayers = filterPlayersBySquad(data);
+			setPlayers(filteredPlayers);
 		} catch (error) {
 			console.log(error);
 		}
+	}
+
+	function removeSquad(squadToBeDeleted: string) {
+		const squadListWithtoutDeletedOne = squadList.filter(
+			(squad) => squad !== squadToBeDeleted
+		);
+		const squadIndex = squadList.indexOf(squadToBeDeleted);
+
+		setSquad(`Squad 1`);
+		setSquadList(squadListWithtoutDeletedOne);
+	}
+
+	function addSquad() {
+		setSquadCount((prev) => prev + 1);
+		setSquadList((prev) => [...prev, `Squad ${squadCount + 1}`]);
+
+		setSquad(`Squad ${squadCount + 1}`);
 	}
 
 	useFocusEffect(
@@ -86,18 +113,19 @@ export default function Players() {
 
 			<HeaderList>
 				<FlatList
-					data={["Squad A", "Squad B"]}
+					data={squadList}
 					keyExtractor={(item) => item}
 					renderItem={({ item }) => (
 						<Filter
 							title={item}
 							isActive={item === squad}
+							removeSquad={() => removeSquad(item)}
 							onPress={() => setSquad(item)}
 						/>
 					)}
 					horizontal
 				/>
-				<PlayerCount>{players.length}</PlayerCount>
+				<AddNewSquad onPress={addSquad} />
 			</HeaderList>
 			<FlatList
 				data={players}

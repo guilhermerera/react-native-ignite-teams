@@ -57,7 +57,7 @@ export default function NewGroup() {
 				/>
 				<InputText
 					placeholder='Team Name'
-					value={trimmedTeamName}
+					value={teamName}
 					onChangeText={(text) => setTeamName(text)}
 				/>
 				<Button

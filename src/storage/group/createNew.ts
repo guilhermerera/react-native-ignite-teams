@@ -14,7 +14,7 @@ export async function createNewGroup(newGroupName: string) {
 
 		if (groupAlreadyExists) {
 			throw new AppError(
-				`Team name already exists. Visit ${newGroupName} team page?`
+				`A team called ${newGroupName} already exists. Visit team's page?`
 			);
 		}
 
