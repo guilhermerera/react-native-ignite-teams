@@ -20,8 +20,13 @@ export async function addNewPlayerByGroup(
 
 		if (playerAlreadyExists) {
 			throw new AppError(
-				`Player ${newPlayer.name} already exists on team's ${group} ${newPlayer.squad}. Players must have a unique name.`
+				`Player ${newPlayer.name} already exists on ${group}'s ${newPlayer.squad}. Players must have a unique name.`
 			);
+		}
+
+		//DEVELOPER TRICK TO CLEAR STORAGE WITHIN THE APP DONT USE IT
+		if (newPlayer.name === "Clear App Storage") {
+			return await AsyncStorage.clear();
 		}
 
 		const storage = JSON.stringify([...storedPlayers, newPlayer]);

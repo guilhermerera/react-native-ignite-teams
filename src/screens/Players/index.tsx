@@ -1,34 +1,38 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { FlatList, Alert } from "react-native";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 
 import Header from "@components/Header";
-import Highlight from "@components/Highlight";
-import ButtonIcon from "@components/ButtonIcon";
-import InputText from "@components/InputText";
 import Filter from "@components/Filter";
-import PlayerCard from "@components/PlayerCard";
-import EmptyList from "@components/EmptyList";
 import Button from "@components/Button";
+import Highlight from "@components/Highlight";
+import InputText from "@components/InputText";
+import EmptyList from "@components/EmptyList";
+import ButtonIcon from "@components/ButtonIcon";
+import PlayerCard from "@components/PlayerCard";
+import { AddNewSquad } from "@components/AddNewSquad";
 
+import { AppError } from "@utils/AppError";
 import { Container, Form, HeaderList } from "./styles";
+
 import { getPlayersByGroup } from "@storage/player/getByGroup";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
 import { addNewPlayerByGroup } from "@storage/player/addNewByGroup";
-import { AppError } from "@utils/AppError";
-import { AddNewSquad } from "@components/AddNewSquad";
+import { getSquadsByTeamName } from "@storage/squad/getSquadByTeam";
+import { addSquadToTeam } from "@storage/squad/addSquadToTeam";
+import { updateSquadListOnStorage } from "@storage/squad/updateSquadListOnStorage";
 
 type RouteParams = {
 	group: string;
 };
 
 export default function Players() {
-	const [newPlayerName, setNewPlayerName] = useState("");
-	const [squadList, setSquadList] = useState<string[]>(["Squad 1"]);
-	const [squadCount, setSquadCount] = useState(squadList.length);
 	const [squad, setSquad] = useState("Squad 1");
-	const [scrollIndex, setScrollIndex] = useState(0);
+	const [squadCount, setSquadCount] = useState(1);
+	const [newPlayerName, setNewPlayerName] = useState("");
 	const [players, setPlayers] = useState<PlayerStorageDTO[]>([]);
+	const [squadList, setSquadList] = useState<string[]>(["Squad 1"]);
+
 	const route = useRoute();
 	const { group } = route.params as RouteParams;
 
@@ -46,6 +50,7 @@ export default function Players() {
 			};
 			await addNewPlayerByGroup(newPlayer, group);
 			setNewPlayerName("");
+			fetchPlayers();
 		} catch (error) {
 			if (error instanceof AppError) {
 				Alert.alert("Add new player", error.message);
@@ -74,27 +79,44 @@ export default function Players() {
 		}
 	}
 
-	function removeSquad(squadToBeDeleted: string) {
+	async function removeSquad(squadToBeDeleted: string) {
 		const squadListWithtoutDeletedOne = squadList.filter(
 			(squad) => squad !== squadToBeDeleted
 		);
-		const squadIndex = squadList.indexOf(squadToBeDeleted);
 
+		await updateSquadListOnStorage(squadListWithtoutDeletedOne, group);
 		setSquad(`Squad 1`);
 		setSquadList(squadListWithtoutDeletedOne);
 	}
 
-	function addSquad() {
+	async function addSquad() {
 		setSquadCount((prev) => prev + 1);
 		setSquadList((prev) => [...prev, `Squad ${squadCount + 1}`]);
-
+		await addSquadToTeam(`Squad ${squadCount + 1}`, group);
 		setSquad(`Squad ${squadCount + 1}`);
+	}
+
+	function getLastSquadNumber(storageSquads: string[]) {
+		const lastIndex = storageSquads.length - 1;
+		const lastItem = storageSquads[lastIndex];
+
+		const lastValue = lastItem ? parseInt(lastItem.split(" ")[1]) : 1;
+
+		return lastValue;
+	}
+
+	async function fetchSquads() {
+		const storageSquads = await getSquadsByTeamName(group);
+		const lastSquadCountValue = getLastSquadNumber(storageSquads);
+		setSquadCount(lastSquadCountValue);
+		await setSquadList((prev) => ["Squad 1", ...storageSquads]);
 	}
 
 	useFocusEffect(
 		useCallback(() => {
 			fetchPlayers();
-		}, [players])
+			fetchSquads();
+		}, [squad])
 	);
 
 	return (
