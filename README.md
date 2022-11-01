@@ -1,5 +1,3 @@
-#### ⚠️ WORK IN PROGRESS ⚠️
-
 [![Linkedin Badge](https://img.shields.io/badge/-guilhermerera-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/guilhermerera/)](https://www.linkedin.com/in/guilhermerera/)
 [![Gmail Badge](https://img.shields.io/badge/-hello@rera.dev-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:hello@rera.dev)](mailto:hello@rera.dev)
 
@@ -24,6 +22,7 @@
 ### 🎯 Project Goal
 
 The goal was to understand how to use styled-components within React Native and how to implement a design system using CSS-in-JS. For navigation I used React Navigation using the stack navigation technique, with and without parameters between screens. To persist information on the user's device, we use Async Storage.
+I made a few tweaks and twists on the orignal project to fit my personal desire, such as the option to add/remove squads on each team.
 
 <br>
 
