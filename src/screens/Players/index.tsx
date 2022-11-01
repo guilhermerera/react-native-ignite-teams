@@ -1,6 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
-import { FlatList, Alert } from "react-native";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { useState, useCallback, useRef } from "react";
+import { FlatList, Alert, TextInput } from "react-native";
+import {
+	useFocusEffect,
+	useNavigation,
+	useRoute
+} from "@react-navigation/native";
 
 import Header from "@components/Header";
 import Filter from "@components/Filter";
@@ -15,11 +19,13 @@ import { AddNewSquad } from "@components/AddNewSquad";
 import { AppError } from "@utils/AppError";
 import { Container, Form, HeaderList } from "./styles";
 
+import { removeGroup } from "@storage/group/removeGroup";
+import { addSquadToTeam } from "@storage/squad/addSquadToTeam";
 import { getPlayersByGroup } from "@storage/player/getByGroup";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
 import { addNewPlayerByGroup } from "@storage/player/addNewByGroup";
 import { getSquadsByTeamName } from "@storage/squad/getSquadByTeam";
-import { addSquadToTeam } from "@storage/squad/addSquadToTeam";
+import { removePlayerFromSquad } from "@storage/player/removePlayer";
 import { updateSquadListOnStorage } from "@storage/squad/updateSquadListOnStorage";
 
 type RouteParams = {
@@ -33,10 +39,31 @@ export default function Players() {
 	const [players, setPlayers] = useState<PlayerStorageDTO[]>([]);
 	const [squadList, setSquadList] = useState<string[]>(["Squad 1"]);
 
+	const navigation = useNavigation();
+
 	const route = useRoute();
 	const { group } = route.params as RouteParams;
 
+	const playerNameTextInputRef = useRef<TextInput>(null);
+
 	const trimmedNewPlayerName = newPlayerName.trim();
+
+	async function handleRemovePlayer(
+		playerNameToBeRemoved: PlayerStorageDTO,
+		group: string
+	) {
+		try {
+			await removePlayerFromSquad(playerNameToBeRemoved, group);
+			fetchPlayers();
+		} catch (error) {
+			if (error instanceof AppError) {
+				Alert.alert("Remove Player", error.message);
+			} else {
+				Alert.alert("Remove Player", "Error, please try again later.");
+				console.log(error);
+			}
+		}
+	}
 
 	async function handleAddNewPlayer() {
 		if (trimmedNewPlayerName === "") {
@@ -49,6 +76,8 @@ export default function Players() {
 				squad: squad
 			};
 			await addNewPlayerByGroup(newPlayer, group);
+
+			playerNameTextInputRef.current?.blur();
 			setNewPlayerName("");
 			fetchPlayers();
 		} catch (error) {
@@ -109,7 +138,33 @@ export default function Players() {
 		const storageSquads = await getSquadsByTeamName(group);
 		const lastSquadCountValue = getLastSquadNumber(storageSquads);
 		setSquadCount(lastSquadCountValue);
-		await setSquadList((prev) => ["Squad 1", ...storageSquads]);
+		setSquadList((prev) => ["Squad 1", ...storageSquads]);
+	}
+
+	async function deleteGroup(groupToBeDelete: string) {
+		try {
+			await removeGroup(groupToBeDelete);
+			navigation.navigate("groups");
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	function handleGroupDelete() {
+		Alert.alert(
+			"Delete team",
+			"Are you sure you want to delete this group? You can still access all squads and players by creating a new team with the same name as this one.",
+			[
+				{
+					text: "Yes, delete",
+					onPress: () => deleteGroup(group)
+				},
+				{
+					text: "No",
+					style: "cancel"
+				}
+			]
+		);
 	}
 
 	useFocusEffect(
@@ -125,10 +180,13 @@ export default function Players() {
 			<Highlight title={group} subtitle='Add your teammates' />
 			<Form>
 				<InputText
+					inputRef={playerNameTextInputRef}
 					placeholder='Player name'
 					autoCorrect={false}
 					value={newPlayerName}
 					onChangeText={(text) => setNewPlayerName(text)}
+					onSubmitEditing={handleAddNewPlayer}
+					returnKeyType='done'
 				/>
 				<ButtonIcon icon='add' onPress={handleAddNewPlayer} />
 			</Form>
@@ -153,7 +211,12 @@ export default function Players() {
 				data={players}
 				keyExtractor={(item) => `${item.name}-${item.squad}`}
 				renderItem={({ item }) => (
-					<PlayerCard name={item.name} onRemove={() => {}} />
+					<PlayerCard
+						name={item.name}
+						onRemove={() => {
+							handleRemovePlayer(item, group);
+						}}
+					/>
 				)}
 				ListEmptyComponent={() => (
 					<EmptyList message='This squad has no players yet.' />
@@ -164,7 +227,11 @@ export default function Players() {
 					players.length === 0 && { flex: 1 }
 				]}
 			/>
-			<Button title='Delete team' type='SECONDARY' />
+			<Button
+				title='Delete team'
+				type='SECONDARY'
+				onPress={handleGroupDelete}
+			/>
 		</Container>
 	);
 }
