@@ -22,7 +22,7 @@
 ### 🎯 Project Goal
 
 The goal was to understand how to use styled-components within React Native and how to implement a design system using CSS-in-JS. For navigation I used React Navigation using the stack navigation technique, with and without parameters between screens. To persist information on the user's device, we use Async Storage.
-I made a few tweaks and twists on the orignal project to fit my personal desire, such as the option to add/remove squads on each team.
+I made a few tweaks and twists on the orignal project to fit my personal desire, such as the option to add/remove squads on each team and the strategy for building a few components.
 
 <br>
 
